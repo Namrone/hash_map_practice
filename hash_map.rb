@@ -3,7 +3,7 @@
 class HashMap
 
   def initialize
-    @load_factor = 0.8
+    @load_factor = 0.75
     @capacity = 0
     @buckets = Array.new(16){[]}
   end
@@ -19,8 +19,8 @@ class HashMap
 
   def set(key, value)
     #If current amount of buckets is over the max * load_factor then double the amount of buckets
-    if @capacity > @buckets.length*@load_factor
-      new_len = @bucket.length * 2
+    if @capacity >= (@buckets.length * @load_factor)
+      new_len = @buckets.length * 2
       expansion = Array.new(new_len){[]}
       
       #Rehash
@@ -48,9 +48,61 @@ class HashMap
     @buckets[code] << [key, value]
   end
 
+  def get(key)
+    code = hash(key) % @buckets.length
+
+    @buckets[code].each do |entry|
+      return entry[1] if entry[0] == key
+    end
+
+    nil
+  end
+
+  def has?(key)
+    loop_buckets{|entry| return true if entry[0] == key}
+    false
+  end
+
+  def remove(key)
+    code = hash(key) % @buckets.length
+    location = nil
+
+    @buckets[code].each_with_index {|entry,index| location = index if entry[0] == key}
+    return location if location.nil?
+
+    @buckets[code].delete_at(location)
+    @capacity -= 1
+  end
+
+  def length
+    return @capacity
+  end
+
+  def clear
+    @buckets = Array.new(16){[]}
+  end
+
+  def keys
+    key_list = []
+    loop_buckets {|entry| key_list << entry[0]}
+    key_list
+  end
+
+  def values
+    value_list = []
+    loop_buckets {|entry| value_list << entry[1]}
+    value_list
+  end
+
+  def entries
+    entries = []
+    loop_buckets {|entry| entries << entry}
+    entries
+  end
+
   def loop_buckets
     @buckets.each do |bucket|
-      next if bucket.empty?
+      next if bucket.nil?
       bucket.each do |entry|
         yield(entry)
       end
